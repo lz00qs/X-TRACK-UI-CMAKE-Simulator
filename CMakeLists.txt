@@ -11,8 +11,8 @@ set(CMAKE_C_STANDARD 11)#C99 # lvgl officially support C99 and above
 set(CMAKE_CXX_STANDARD 17)#C17
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-file(GLOB_RECURSE INCLUDES "lv_drivers/*.h" "lvgl/demos/*.h"  "lvgl/*.h"  "./*.h" )
-file(GLOB_RECURSE SOURCES  "lv_drivers/*.c" "lvgl/demos/*.c"  "lvgl/src/*.c" )
+file(GLOB_RECURSE LV_INCLUDES "lv_drivers/*.h" "lvgl/demos/*.h"  "lvgl/*.h"  "./*.h")
+file(GLOB_RECURSE LV_SOURCES  "lv_drivers/*.c" "lvgl/demos/*.c"  "lvgl/src/*.c")
 
 set(EXECUTABLE_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/bin)
 
@@ -24,14 +24,32 @@ add_compile_definitions($<$<BOOL:${LV_USE_LIBJPEG_TURBO}>:LV_USE_LIBJPEG_TURBO=1
 add_compile_definitions($<$<BOOL:${LV_USE_FFMPEG}>:LV_USE_FFMPEG=1>)
 
 add_subdirectory(lvgl)
-target_include_directories(lvgl PUBLIC ${PROJECT_SOURCE_DIR} ${SDL2_INCLUDE_DIRS})
 
-add_executable(main main.c mouse_cursor_icon.c ${SOURCES} ${INCLUDES})
+file(GLOB_RECURSE APP_SOURCES "App/*.cpp" "App/*.c" "ArduinoJson/src/*.cpp" "ArduinoJson/src/*.c")
+file(GLOB_RECURSE APP_INCLUDES "App/*")
+
+file(GLOB HAL_SOURCES "HAL/*.cpp" "HAL/*.c")
+
+target_include_directories(lvgl PUBLIC
+        ${PROJECT_SOURCE_DIR}
+        ${SDL2_INCLUDE_DIRS}
+        ${PROJECT_SOURCE_DIR}/App
+        ${APP_INCLUDES}
+        "ArduinoJson/src"
+        "HAL"
+)
+
+add_executable(main
+        main.cpp
+        mouse_cursor_icon.c
+        ${LV_SOURCES}
+        ${LV_INCLUDES}
+        ${APP_SOURCES}
+        ${HAL_SOURCES}
+)
 
 target_compile_definitions(main PRIVATE LV_CONF_INCLUDE_SIMPLE)
-#target_link_libraries(main lvgl lvgl::examples lvgl::demos lvgl::thorvg ${SDL2_LIBRARIES} m pthread)
 target_link_libraries(main lvgl lvgl::examples lvgl::demos ${SDL2_LIBRARIES} m pthread)
-#target_link_libraries(main lvgl lvgl::examples lvgl::demos SDL2 m pthread)
 add_custom_target (run COMMAND ${EXECUTABLE_OUTPUT_PATH}/main DEPENDS main)
 
 if(LV_USE_DRAW_SDL)
